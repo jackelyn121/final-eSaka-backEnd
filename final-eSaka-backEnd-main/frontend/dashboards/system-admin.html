@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Admin — eSaka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/components.css">
+<style>
+  .btn-disabled-filter {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .hidden {
+    display: none;
+  }
+
+  /* ============================================================
+     ALERT CARDS DESIGN (Matching Target UI)
+     ============================================================ */
+  .alert-container-card {
+    padding: 24px;
+  }
+
+  .alert-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .alert-card {
+    background: #E2E2E2;
+    border-radius: 14px;
+    padding: 18px 24px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  }
+
+  .alert-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    background: #DADADA;
+  }
+
+  .alert-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .alert-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .alert-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  /* Severity Badge */
+  .sev-pill {
+    display: inline-block;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 3px 12px;
+    border-radius: 999px;
+  }
+
+  .sev-pill.high {
+    background: #E8C3B9;
+    color: #8C2A1C;
+  }
+
+  .sev-pill.medium {
+    background: #E5DA9D;
+    color: #7A6310;
+  }
+
+  .sev-pill.low {
+    background: #D1E0D7;
+    color: #2D6A4F;
+  }
+
+  /* Status Button Pill */
+  .status-pill-btn {
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+
+  .status-pill-btn:hover {
+    opacity: 0.85;
+  }
+
+  .status-pill-btn.unresolved {
+    background: #E8B4AC;
+    color: #8B2D22;
+  }
+
+  .status-pill-btn.acknowledged {
+    background: #A3D9B1;
+    color: #1E5C31;
+  }
+
+  .alert-desc {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.45;
+    margin: 0 0 12px 0;
+  }
+
+  .alert-stats {
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    font-size: 12.5px;
+    color: #666;
+  }
+
+  .alert-stats span b {
+    color: #222;
+    font-weight: 600;
+  }
+
+  .alert-date {
+    margin-left: auto;
+    font-size: 12px;
+    color: #777;
+  }
+
+  /* ============================================================
+     ALERT FULL DETAILS MODAL
+     ============================================================ */
+  .alert-detail-box {
+    max-width: 460px;
+    text-align: left;
+    padding: 28px 32px;
+  }
+
+  .alert-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .alert-modal-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--green);
+    margin: 0;
+  }
+
+  .alert-modal-body p {
+    font-size: 14px;
+    color: var(--ink);
+    line-height: 1.5;
+    margin-bottom: 20px;
+    text-align: left;
+  }
+
+  .modal-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    background: #F6F3EB;
+    padding: 14px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+    font-size: 13px;
+  }
+
+  .modal-stats-grid div {
+    color: var(--muted);
+  }
+
+  .modal-stats-grid div b {
+    color: var(--ink);
+    display: block;
+    font-size: 14px;
+    margin-top: 2px;
+  }
+
+  .modal-actions-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" id="hamburgerBtn" aria-label="Toggle navigation" type="button">
+        <span></span><span></span><span></span>
+      </button>
+
+      <div class="logos">
+        <svg class="seal" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="46" fill="none" stroke="#5B6B4F" stroke-width="3"/>
+          <path d="M50 20 C 35 30, 30 45, 50 65 C 70 45, 65 30, 50 20 Z" fill="#5B6B4F"/>
+          <path d="M50 30 L50 62" stroke="#F2EDE1" stroke-width="2"/>
+        </svg>
+
+        <div class="brand-logo">
+          <svg viewBox="0 0 200 170" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g fill="none" stroke="#8C6A4A" stroke-width="3" stroke-linecap="round">
+              <path d="M8 90 C 40 40, 90 20, 150 15"/>
+              <path d="M8 90 C 45 55, 95 40, 155 45"/>
+              <path d="M8 90 C 50 78, 100 72, 158 82"/>
+              <path d="M8 90 C 45 105, 95 118, 150 130"/>
+              <path d="M8 90 C 40 130, 85 150, 130 158"/>
+            </g>
+          </svg>
+        </div>
+        <span class="brand-word">eSaka</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="bell-wrap" id="bellBtn" aria-label="Notifications">
+        <svg viewBox="0 0 24 24"><path d="M12 2a6 6 0 00-6 6v3.09c0 .58-.2 1.14-.57 1.59L4 15h16l-1.43-2.32a2.5 2.5 0 01-.57-1.59V8a6 6 0 00-6-6zm0 20a2.5 2.5 0 002.45-2h-4.9A2.5 2.5 0 0012 22z"/></svg>
+        <span class="bell-dot"></span>
+      </div>
+
+      <div class="notif-dropdown" id="notifDropdown">
+        <div class="notif-header">Notifications</div>
+        <button class="notif-item" type="button">
+          <b>System updated</b> successfully to v1.2.
+        </button>
+      </div>
+
+      <div class="user-info">
+        <div class="user-text">
+          <div class="user-name">Juan Dela Cruz</div>
+          <div class="user-role">System Admin</div>
+        </div>
+        <div class="avatar">
+          <svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.4 0-8 2.2-8 5v3h16v-3c0-2.8-3.6-5-8-5z"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <nav class="sidebar" id="sidebar">
+      <div class="nav-list">
+        <button class="nav-item active" type="button" data-view="users">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          Manage Users
+        </button>
+        <button class="nav-item" type="button" data-view="etl">
+          <svg viewBox="0 0 24 24"><path d="M3 5h18v2H3zm0 6h18v2H3zm0 6h18v2H3z"/></svg>
+          Monitor ETL Pipeline
+        </button>
+        <button class="nav-item" type="button" data-view="alerts">
+          <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+          Alert Log
+        </button>
+        <button class="nav-item" type="button" data-view="audit">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+          Audit Log
+        </button>
+      </div>
+
+      <a class="signout" href="../index.html">
+        <svg viewBox="0 0 24 24"><path d="M10 17l1.41-1.41L8.83 13H20v-2H8.83l2.58-2.59L10 7l-5 5zM4 5h8V3H4a2 2 0 00-2 2v14a2 2 0 002 2h8v-2H4V5z"/></svg>
+        Sign Out
+      </a>
+    </nav>
+
+    <main class="main">
+
+      <!-- ===================== VIEW: Manage Users ===================== -->
+      <section class="view active-view" id="view-users">
+        <div class="main-header">
+          <h1>All Users</h1>
+          <div class="search-row">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="searchUsers" placeholder="Search users...">
+            </div>
+            <button class="filter-btn btn-disabled-filter" aria-label="Filter" disabled type="button">
+              <svg viewBox="0 0 24 24"><path d="M3 4h18v2l-7 8v6l-4-2v-4L3 6z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">User Account Management</div>
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="userRows">
+              <tr>
+                <td><span class="name-pill">Maria Santos</span></td>
+                <td><span class="username-pill">da_officer</span></td>
+                <td><span class="role blue">DA-RFO Officer</span></td>
+                <td><span class="status-pill">Active</span></td>
+                <td><button class="action-btn" type="button">Deactivate</button></td>
+              </tr>
+              <tr>
+                <td><span class="name-pill">Juan dela Cruz</span></td>
+                <td><span class="username-pill">lgu_officer</span></td>
+                <td><span class="role teal">LGU Agricultural Officer</span></td>
+                <td><span class="status-pill">Active</span></td>
+                <td><button class="action-btn" type="button">Deactivate</button></td>
+              </tr>
+              <tr>
+                <td><span class="name-pill">Rosa Reyes</span></td>
+                <td><span class="username-pill">aew_user</span></td>
+                <td><span class="role green">Agricultural Extension Worker</span></td>
+                <td><span class="status-pill">Active</span></td>
+                <td><button class="action-btn" type="button">Deactivate</button></td>
+              </tr>
+              <tr>
+                <td><span class="name-pill">System Admin</span></td>
+                <td><span class="username-pill">sysadmin</span></td>
+                <td><span class="role darkred">System Administrator</span></td>
+                <td><span class="status-pill">Active</span></td>
+                <td><button class="action-btn" type="button">Deactivate</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="add-account-row">
+          <button class="btn-primary" id="addAccountBtn" type="button">Add Account</button>
+        </div>
+      </section>
+
+      <!-- ===================== VIEW: Add New Account ===================== -->
+      <section class="view" id="view-add-account">
+        <div class="main-header">
+          <h1>Add New Account</h1>
+        </div>
+
+        <div class="card">
+          <form id="addAccountForm" novalidate>
+            <div class="form-grid">
+              <div class="form-field">
+                <label for="firstName">First Name *</label>
+                <input type="text" id="firstName" required>
+              </div>
+              <div class="form-field">
+                <label for="lastName">Last Name *</label>
+                <input type="text" id="lastName" required>
+              </div>
+              <div class="form-field">
+                <label for="newUsername">Username *</label>
+                <input type="text" id="newUsername" required>
+              </div>
+              <div class="form-field">
+                <label for="newEmail">Email *</label>
+                <input type="email" id="newEmail" required>
+              </div>
+              <div class="form-field">
+                <label for="newPassword">Password *</label>
+                <input type="password" id="newPassword" required>
+              </div>
+              <div class="form-field">
+                <label for="phoneNumber">Phone Number *</label>
+                <input type="tel" id="phoneNumber" required>
+              </div>
+              <div class="form-field">
+                <label for="confirmPassword">Confirm Password *</label>
+                <input type="password" id="confirmPassword" required>
+              </div>
+              <div class="form-field">
+                <label for="roleSelect">Role *</label>
+                <select id="roleSelect" required>
+                  <option value="" disabled selected>Select a role</option>
+                  <option value="System Administrator">System Administrator</option>
+                  <option value="DA-RFO Officer">DA-RFO</option>
+                  <option value="Provincial Coordinator">Provincial Coordinator</option>
+                  <option value="Municipal Coordinator">Municipal Coordinator</option>
+                  <option value="AEW">AEW</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" id="cancelAddAccount">Cancel</button>
+              <button type="submit" class="btn-primary">Create Account</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ===================== VIEW: Monitor ETL Pipeline ===================== -->
+      <section class="view" id="view-etl">
+        <div class="main-header">
+          <h1>ETL Pipeline Run Logs</h1>
+          <div class="search-row">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="searchETL" placeholder="Search logs...">
+            </div>
+            <div class="filter-wrap">
+              <button class="filter-btn" id="filterBtnETL" aria-label="Filter by status" type="button">
+                <svg viewBox="0 0 24 24"><path d="M3 4h18v2l-7 8v6l-4-2v-4L3 6z"/></svg>
+              </button>
+              <div class="filter-dropdown" id="filterDropdownETL">
+                <button class="filter-option selected" data-filter="all" type="button">All</button>
+                <button class="filter-option" data-filter="success" type="button">Success</button>
+                <button class="filter-option" data-filter="warning" type="button">Warning</button>
+                <button class="filter-option" data-filter="error" type="button">Error</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">ETL Pipeline Run Log</div>
+          <table>
+            <thead>
+              <tr><th>Run Date/Time</th><th>Data Source</th><th>Records Processed</th><th>Records Rejected</th><th>Errors</th><th>Duration</th><th>Status</th></tr>
+            </thead>
+            <tbody id="etlRows">
+              <tr data-status="success">
+                <td>2026-05-13 06:00</td><td><span class="pill">PSA OpenSTAT</span></td>
+                <td><span class="pill">1,240</span></td><td><span class="pill">3</span></td>
+                <td><span class="pill">0</span></td><td><span class="pill">4m 12s</span></td>
+                <td><span class="status-pill success">Success</span></td>
+              </tr>
+              <tr data-status="warning">
+                <td>2026-05-12 06:00</td><td><span class="pill">DA-AMAD</span></td>
+                <td><span class="pill">980</span></td><td><span class="pill">15</span></td>
+                <td><span class="pill">2</span></td><td><span class="pill">3m 55s</span></td>
+                <td><span class="status-pill warning">Warning</span></td>
+              </tr>
+              <tr data-status="success">
+                <td>2026-05-11 06:00</td><td><span class="pill">PSA OpenSTAT</span></td>
+                <td><span class="pill">1,215</span></td><td><span class="pill">0</span></td>
+                <td><span class="pill">0</span></td><td><span class="pill">4m 03s</span></td>
+                <td><span class="status-pill success">Success</span></td>
+              </tr>
+              <tr data-status="warning">
+                <td>2026-05-10 06:00</td><td><span class="pill">DA-AMAD</span></td>
+                <td><span class="pill">943</span></td><td><span class="pill">5</span></td>
+                <td><span class="pill">1</span></td><td><span class="pill">3m 48s</span></td>
+                <td><span class="status-pill warning">Warning</span></td>
+              </tr>
+              <tr data-status="error">
+                <td>2026-05-09 06:00</td><td><span class="pill">PSA OpenSTAT</span></td>
+                <td><span class="pill">1,190</span></td><td><span class="pill">22</span></td>
+                <td><span class="pill">5</span></td><td><span class="pill">2m 11s</span></td>
+                <td><span class="status-pill error">Error</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="no-results hidden" id="noResultsETL">No runs match this filter.</p>
+        </div>
+
+        <div class="manual-run-row">
+          <button class="btn-primary outline" id="manualRunBtn" type="button">Manual Run</button>
+        </div>
+      </section>
+
+      <!-- ===================== VIEW: Alert Log ===================== -->
+      <section class="view" id="view-alerts">
+        <div class="main-header">
+          <h1>System Alert Logs</h1>
+          <div class="search-row">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="searchAlerts" placeholder="Search alerts...">
+            </div>
+            <div class="filter-wrap">
+              <button class="filter-btn" id="filterBtnAlerts" aria-label="Filter by severity" type="button">
+                <svg viewBox="0 0 24 24"><path d="M3 4h18v2l-7 8v6l-4-2v-4L3 6z"/></svg>
+              </button>
+              <div class="filter-dropdown" id="filterDropdownAlerts">
+                <button class="filter-option selected" data-filter="all" type="button">All</button>
+                <button class="filter-option" data-filter="high" type="button">High</button>
+                <button class="filter-option" data-filter="medium" type="button">Medium</button>
+                <button class="filter-option" data-filter="low" type="button">Low</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card alert-container-card">
+          <div class="alert-list" id="alertList">
+            
+            <div class="alert-card" data-severity="high" data-id="1">
+              <div class="alert-top">
+                <div class="alert-title-group">
+                  <span class="alert-title">Onion Oversupply Risk — Region III</span>
+                  <span class="sev-pill high">High</span>
+                </div>
+                <button class="status-pill-btn unresolved" type="button">Unresolved</button>
+              </div>
+              <p class="alert-desc">Projected supply of 280,000 kg exceeds demand by 40%. Recommend coordinating with buyers or adjusting planting schedules.</p>
+              <div class="alert-stats">
+                <span>Supply: <b>280t</b></span>
+                <span>Demand: <b>200t</b></span>
+                <span>Surplus: <b>+40%</b></span>
+                <span class="alert-date">2026-05-10</span>
+              </div>
+            </div>
+
+            <div class="alert-card" data-severity="medium" data-id="2">
+              <div class="alert-top">
+                <div class="alert-title-group">
+                  <span class="alert-title">Tomato Oversupply Risk — CALABARZON</span>
+                  <span class="sev-pill medium">Medium</span>
+                </div>
+                <button class="status-pill-btn acknowledged" type="button">Acknowledged</button>
+              </div>
+              <p class="alert-desc">Tomato supply in Lipa City area is 31% above projected demand. Monitor closely and notify buyers.</p>
+              <div class="alert-stats">
+                <span>Supply: <b>210t</b></span>
+                <span>Demand: <b>160t</b></span>
+                <span>Surplus: <b>+31%</b></span>
+                <span class="alert-date">2026-05-08</span>
+              </div>
+            </div>
+
+          </div>
+          <p class="no-results hidden" id="noResultsAlerts">No alerts match this filter.</p>
+        </div>
+      </section>
+
+      <!-- ===================== VIEW: Audit Log ===================== -->
+      <section class="view" id="view-audit">
+        <div class="main-header">
+          <h1>System Audit Logs</h1>
+          <div class="search-row">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="searchAudit" placeholder="Search audit logs...">
+            </div>
+            <div class="filter-wrap">
+              <button class="filter-btn" id="filterBtnAudit" aria-label="Filter by action" type="button">
+                <svg viewBox="0 0 24 24"><path d="M3 4h18v2l-7 8v6l-4-2v-4L3 6z"/></svg>
+              </button>
+              <div class="filter-dropdown" id="filterDropdownAudit">
+                <button class="filter-option selected" data-filter="all" type="button">All</button>
+                <button class="filter-option" data-filter="acknowledge" type="button">Acknowledge</button>
+                <button class="filter-option" data-filter="accept" type="button">Accept</button>
+                <button class="filter-option" data-filter="create" type="button">Create</button>
+                <button class="filter-option" data-filter="update" type="button">Update</button>
+                <button class="filter-option" data-filter="view" type="button">View</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Platform Audit Log</div>
+          <table>
+            <thead>
+              <tr><th>Timestamp</th><th>User</th><th>Action</th><th>Entity</th><th>Detail</th></tr>
+            </thead>
+            <tbody id="auditRows">
+              <tr data-action="create">
+                <td><span class="pill">2026-05-13 08:22</span></td>
+                <td><span class="pill">aew_user</span></td>
+                <td><span class="pill action">CREATE</span></td>
+                <td><span class="pill">PlantingIntent</span></td>
+                <td class="detail-cell">Submitted intent for Pedro Manalang — Onion, 15,000 kg</td>
+              </tr>
+              <tr data-action="acknowledge">
+                <td><span class="pill">2026-05-13 08:35</span></td>
+                <td><span class="pill">da_officer</span></td>
+                <td><span class="pill action">ACKNOWLEDGE</span></td>
+                <td><span class="pill">Alert</span></td>
+                <td class="detail-cell">Acknowledged oversupply alert for Tomato — CALABARZON</td>
+              </tr>
+              <tr data-action="accept">
+                <td><span class="pill">2026-05-12 14:10</span></td>
+                <td><span class="pill">buyer_org</span></td>
+                <td><span class="pill action">ACCEPT</span></td>
+                <td><span class="pill">OfftakeRequest</span></td>
+                <td class="detail-cell">Accepted offtake request OR-001 from Pedro Manalang</td>
+              </tr>
+              <tr data-action="update">
+                <td><span class="pill">2026-05-12 09:55</span></td>
+                <td><span class="pill">sysadmin</span></td>
+                <td><span class="pill action">UPDATE</span></td>
+                <td><span class="pill">User</span></td>
+                <td class="detail-cell">Activated account for buyer_org (Verde Foods)</td>
+              </tr>
+              <tr data-action="view">
+                <td><span class="pill">2026-05-11 16:30</span></td>
+                <td><span class="pill">lgu_officer</span></td>
+                <td><span class="pill action">VIEW</span></td>
+                <td><span class="pill">SupplyMap</span></td>
+                <td class="detail-cell">Viewed supply map for San Jose City — Onion</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="no-results hidden" id="noResultsAudit">No entries match this filter.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ===== Success Modal ===== -->
+  <div class="modal-overlay" id="successModal">
+    <div class="modal-box">
+      <p class="modal-title">Account Created Successfully</p>
+      <button class="btn-primary modal-ok" id="modalOkBtn" type="button">Ok</button>
+    </div>
+  </div>
+
+  <!-- ===== Alert Full Detail Modal ===== -->
+  <div class="modal-overlay" id="alertDetailModal">
+    <div class="modal-box alert-detail-box">
+      <div class="alert-modal-header">
+        <h2 id="modalAlertTitle">Alert Details</h2>
+        <span id="modalAlertSev" class="sev-pill high">High</span>
+      </div>
+      <div class="alert-modal-body">
+        <p id="modalAlertDesc"></p>
+        <div class="modal-stats-grid">
+          <div>Supply: <b id="modalAlertSupply"></b></div>
+          <div>Demand: <b id="modalAlertDemand"></b></div>
+          <div>Surplus: <b id="modalAlertSurplus"></b></div>
+          <div>Date Logged: <b id="modalAlertDate"></b></div>
+        </div>
+      </div>
+      <div class="modal-actions-row">
+        <button class="btn-secondary" id="closeAlertModalBtn" type="button">Close</button>
+        <button class="btn-primary" id="toggleAlertStatusBtn" type="button">Acknowledge</button>
+      </div>
+    </div>
+  </div>
+
+<!-- Shared behavior script -->
+<script src="../assets/js/dashboard-common.js"></script>
+
+<script>
+  /* ============ INITIALIZE DASHBOARD COMMON FUNCTIONS ============ */
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof initViewSwitching === 'function') {
+      initViewSwitching();
+    }
+  });
+
+  /* ============ SEARCH & FILTERS ============ */
+  if (typeof wireSearchFilter === 'function') {
+    wireSearchFilter({
+      itemsSelector: '#userRows tr',
+      searchInputId: 'searchUsers'
+    });
+
+    wireSearchFilter({
+      itemsSelector: '#etlRows tr',
+      searchInputId: 'searchETL',
+      filterBtnId: 'filterBtnETL',
+      filterDropdownId: 'filterDropdownETL',
+      filterAttr: 'status',
+      noResultsId: 'noResultsETL'
+    });
+
+    wireSearchFilter({
+      itemsSelector: '#alertList .alert-card',
+      searchInputId: 'searchAlerts',
+      filterBtnId: 'filterBtnAlerts',
+      filterDropdownId: 'filterDropdownAlerts',
+      filterAttr: 'severity',
+      noResultsId: 'noResultsAlerts'
+    });
+
+    wireSearchFilter({
+      itemsSelector: '#auditRows tr',
+      searchInputId: 'searchAudit',
+      filterBtnId: 'filterBtnAudit',
+      filterDropdownId: 'filterDropdownAudit',
+      filterAttr: 'action',
+      noResultsId: 'noResultsAudit'
+    });
+  }
+
+  /* ============ MANAGE USERS: Deactivate/Reactivate ============ */
+  document.querySelectorAll('#userRows .action-btn').forEach(btn => {
+    if (typeof wireStatusToggle === 'function') {
+      wireStatusToggle(btn, {
+        onClass: 'active',
+        offClass: 'inactive',
+        onLabel: 'Deactivate',
+        offLabel: 'Reactivate',
+        pillSelector: '.status-pill'
+      });
+    }
+  });
+
+  /* ============ ADD ACCOUNT FLOW ============ */
+  const addAccountForm = document.getElementById('addAccountForm');
+
+  document.getElementById('addAccountBtn').addEventListener('click', () => {
+    if (typeof switchView === 'function') switchView('add-account');
+  });
+
+  document.getElementById('cancelAddAccount').addEventListener('click', () => {
+    addAccountForm.reset();
+    if (typeof switchView === 'function') switchView('users');
+  });
+
+  const roleStyles = {
+    'System Administrator': { cls: 'darkred', label: 'System Administrator' },
+    'DA-RFO Officer':       { cls: 'blue',    label: 'DA-RFO Officer' },
+    'Provincial Coordinator': { cls: 'teal',  label: 'Provincial Coordinator' },
+    'Municipal Coordinator': { cls: 'green',  label: 'Municipal Coordinator' },
+    'AEW':                  { cls: 'green',   label: 'AEW' }
+  };
+
+  addAccountForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
+    const username = document.getElementById('newUsername').value.trim();
+    const email = document.getElementById('newEmail').value.trim();
+    const password = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const phone = document.getElementById('phoneNumber').value.trim();
+    const role = document.getElementById('roleSelect').value;
+
+    if (!firstName || !lastName || !username || !email || !password || !confirmPassword || !phone || !role){
+      alert('Please fill in all required fields.');
+      return;
+    }
+    if (password !== confirmPassword){
+      alert('Passwords do not match.');
+      return;
+    }
+
+    const style = roleStyles[role] || { cls: 'green', label: role };
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><span class="name-pill">${firstName} ${lastName}</span></td>
+      <td><span class="username-pill">${username}</span></td>
+      <td><span class="role ${style.cls}">${style.label}</span></td>
+      <td><span class="status-pill">Active</span></td>
+      <td><button class="action-btn" type="button">Deactivate</button></td>
+    `;
+
+    const newBtn = row.querySelector('.action-btn');
+    if (typeof wireStatusToggle === 'function') {
+      wireStatusToggle(newBtn, {
+        onClass: 'active',
+        offClass: 'inactive',
+        onLabel: 'Deactivate',
+        offLabel: 'Reactivate',
+        pillSelector: '.status-pill'
+      });
+    }
+
+    document.getElementById('userRows').appendChild(row);
+    if (typeof openModal === 'function') openModal('successModal');
+  });
+
+  document.getElementById('modalOkBtn').addEventListener('click', () => {
+    if (typeof closeModal === 'function') closeModal('successModal');
+    addAccountForm.reset();
+    if (typeof switchView === 'function') switchView('users');
+  });
+
+  /* ============ ETL: MANUAL RUN ============ */
+  document.getElementById('manualRunBtn').addEventListener('click', () => {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+    const row = document.createElement('tr');
+    row.dataset.status = 'success';
+    row.innerHTML = `
+      <td>${dateStr}</td>
+      <td><span class="pill">Manual Trigger</span></td>
+      <td><span class="pill">—</span></td>
+      <td><span class="pill">—</span></td>
+      <td><span class="pill">—</span></td>
+      <td><span class="pill">Running…</span></td>
+      <td><span class="status-pill warning">Running</span></td>
+    `;
+    document.getElementById('etlRows').prepend(row);
+  });
+
+  /* ============ ALERTS: Status Button & Details Modal ============ */
+  let currentActiveCard = null;
+
+  // Handle click on Unresolved / Acknowledged status button inside card
+  document.querySelectorAll('.status-pill-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation(); // para maiwasan na mabuksan ang modal kapag button lang ang pinindot
+      toggleCardStatus(btn);
+    });
+  });
+
+  function toggleCardStatus(btn) {
+    const isUnresolved = btn.classList.contains('unresolved');
+    if (isUnresolved) {
+      btn.textContent = 'Acknowledged';
+      btn.classList.remove('unresolved');
+      btn.classList.add('acknowledged');
+    } else {
+      btn.textContent = 'Unresolved';
+      btn.classList.remove('acknowledged');
+      btn.classList.add('unresolved');
+    }
+  }
+
+  // click on alert card for opening nung modal det.
+  document.querySelectorAll('.alert-card').forEach(card => {
+    card.addEventListener('click', () => {
+      currentActiveCard = card;
+
+      const title = card.querySelector('.alert-title').textContent;
+      const desc = card.querySelector('.alert-desc').textContent;
+      const sevEl = card.querySelector('.sev-pill');
+      const stats = card.querySelectorAll('.alert-stats span b');
+      const date = card.querySelector('.alert-date').textContent;
+      const statusBtn = card.querySelector('.status-pill-btn');
+
+      document.getElementById('modalAlertTitle').textContent = title;
+      document.getElementById('modalAlertDesc').textContent = desc;
+      
+      const modalSev = document.getElementById('modalAlertSev');
+      modalSev.textContent = sevEl.textContent;
+      modalSev.className = 'sev-pill ' + (sevEl.classList.contains('high') ? 'high' : sevEl.classList.contains('medium') ? 'medium' : 'low');
+
+      document.getElementById('modalAlertSupply').textContent = stats[0] ? stats[0].textContent : '—';
+      document.getElementById('modalAlertDemand').textContent = stats[1] ? stats[1].textContent : '—';
+      document.getElementById('modalAlertSurplus').textContent = stats[2] ? stats[2].textContent : '—';
+      document.getElementById('modalAlertDate').textContent = date;
+
+      const toggleModalBtn = document.getElementById('toggleAlertStatusBtn');
+      if (statusBtn.classList.contains('unresolved')) {
+        toggleModalBtn.textContent = 'Acknowledge Alert';
+      } else {
+        toggleModalBtn.textContent = 'Mark as Unresolved';
+      }
+
+      if (typeof openModal === 'function') {
+        openModal('alertDetailModal');
+      } else {
+        document.getElementById('alertDetailModal').classList.add('show');
+      }
+    });
+  });
+
+  // Modal actions
+  document.getElementById('closeAlertModalBtn').addEventListener('click', () => {
+    if (typeof closeModal === 'function') {
+      closeModal('alertDetailModal');
+    } else {
+      document.getElementById('alertDetailModal').classList.remove('show');
+    }
+  });
+
+  document.getElementById('toggleAlertStatusBtn').addEventListener('click', () => {
+    if (currentActiveCard) {
+      const btn = currentActiveCard.querySelector('.status-pill-btn');
+      toggleCardStatus(btn);
+    }
+    if (typeof closeModal === 'function') {
+      closeModal('alertDetailModal');
+    } else {
+      document.getElementById('alertDetailModal').classList.remove('show');
+    }
+  });
+</script>
+
+</body>
+</html>
